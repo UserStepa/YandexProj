@@ -239,7 +239,7 @@ class ChooseGame(arcade.View):
         right_container.add(UISpace(height=10))
 
         # Кнопки игр для режима друг против друга
-        games_vs = ["🎾 Теннис", "🪳 Набег вредителей", "🎪 ИГРА 3", "🎳 ИГРА 4", "🎨 ИГРА 5"]
+        games_vs = ["🎾 Теннис", "🪳 Набег вредителей", "🕰️ Точный таймер", "🎳 ИГРА 4", "🎨 ИГРА 5"]
         for i, game_text in enumerate(games_vs, 1):
             game_btn = UIFlatButton(text=game_text, width=220, height=45,
             font_size=16, font_name="Arial")
@@ -290,8 +290,8 @@ class ChooseGame(arcade.View):
         self.window.show_view(ShootingGame())
 
     def on_vs_game3_click(self, event):
-        print("Выбрана игра 3 (режим против друга)")
-        # Здесь будет переход к выбранной игре
+        from Timer import TimerGame
+        self.window.show_view(TimerGame())
 
     def on_vs_game4_click(self, event):
         print("Выбрана игра 4 (режим против друга)")
