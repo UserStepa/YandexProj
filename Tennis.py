@@ -103,6 +103,8 @@ class TennisGame(arcade.View):
         arcade.color.WHITE,24, anchor_x="center")
 
         if not self.game_started and not self.game_over:
+            arcade.draw_text("Забейте 5 раз сопернику!",
+            SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 100, arcade.color.BLACK, 20, anchor_x="center")
             arcade.draw_text("Нажмите: Space - чтобы начать, Esc - чтобы выйти",
             SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50, arcade.color.BLACK, 20, anchor_x="center")
 

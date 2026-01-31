@@ -2,7 +2,6 @@ import sys
 import os
 import arcade
 import sqlite3
-from Tennis_game import TennisGame
 
 
 class StartView(arcade.View):
@@ -240,7 +239,7 @@ class ChooseGame(arcade.View):
         right_container.add(UISpace(height=10))
 
         # Кнопки игр для режима друг против друга
-        games_vs = ["🎾 ТЕННИС", "🎯 ИГРА 2", "🎪 ИГРА 3", "🎳 ИГРА 4", "🎨 ИГРА 5"]
+        games_vs = ["🎾 Теннис", "🪳 Набег вредителей", "🎪 ИГРА 3", "🎳 ИГРА 4", "🎨 ИГРА 5"]
         for i, game_text in enumerate(games_vs, 1):
             game_btn = UIFlatButton(text=game_text, width=220, height=45,
             font_size=16, font_name="Arial")
@@ -283,11 +282,12 @@ class ChooseGame(arcade.View):
 
     # Обработчики для режима друг против друга
     def on_vs_game1_click(self, event):
+        from Tennis import TennisGame
         self.window.show_view(TennisGame())
 
     def on_vs_game2_click(self, event):
-        print("Выбрана игра 2 (режим против друга)")
-        # Здесь будет переход к выбранной игре
+        from Shooting import ShootingGame
+        self.window.show_view(ShootingGame())
 
     def on_vs_game3_click(self, event):
         print("Выбрана игра 3 (режим против друга)")
