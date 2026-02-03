@@ -1,4 +1,3 @@
-import os
 import arcade
 import sqlite3
 import random
@@ -71,6 +70,9 @@ class TennisGame(arcade.View):
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
 
+        self.player1_texture = self.load_texture("data_player1", 1)
+        self.player2_texture = self.load_texture("data_player2", 2)
+
         self.ball = Ball(BALL_SCALE)
         self.left_paddle = Paddle(PADDLE_WIDTH / 2, SCREEN_HEIGHT / 2)
         self.right_paddle = Paddle(SCREEN_WIDTH - PADDLE_WIDTH / 2, SCREEN_HEIGHT / 2)
@@ -87,6 +89,13 @@ class TennisGame(arcade.View):
 
         self.setup()
 
+    def load_texture(self, name, id):
+        self.cursor.execute(
+            f"SELECT name FROM {name} WHERE value = 1")
+        result = self.cursor.fetchone()
+        texture = arcade.load_texture(f"images/data_player{id}/{result[0]}.png")
+        return texture
+
     def setup(self):
         self.sprite_list.append(self.ball)
         self.sprite_list.append(self.left_paddle)
@@ -97,6 +106,13 @@ class TennisGame(arcade.View):
         arcade.draw_texture_rect(self.texture, arcade.rect.XYWH(
             SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, SCREEN_WIDTH, SCREEN_HEIGHT))
         self.sprite_list.draw()
+
+        # Аватары
+        arcade.draw_texture_rect(self.player1_texture, arcade.rect.XYWH(
+            SCREEN_WIDTH // 2 - 65, SCREEN_HEIGHT - 40,50, 50))
+
+        arcade.draw_texture_rect(self.player2_texture, arcade.rect.XYWH(
+            SCREEN_WIDTH // 2 + 65, SCREEN_HEIGHT - 40, 50, 50))
 
         score_text = f"{self.left_score} - {self.right_score}"
         arcade.draw_text(score_text, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 40,
@@ -140,13 +156,13 @@ class TennisGame(arcade.View):
 
         if self.left_score == 5:
             self.game_over = True
-            self.cursor.execute("SELECT name FROM data_player1 WHERE id = 1",)
+            self.cursor.execute("SELECT name FROM data_player1 WHERE id = 0",)
             result = self.cursor.fetchone()
             self.winner = result[0]
             self.winner_id = 1
         elif self.right_score == 5:
             self.game_over = True
-            self.cursor.execute("SELECT name FROM data_player2 WHERE id = 2")
+            self.cursor.execute("SELECT name FROM data_player2 WHERE id = 0")
             result = self.cursor.fetchone()
             self.winner = result[0]
             self.winner_id = 2
@@ -162,7 +178,7 @@ class TennisGame(arcade.View):
             from Game_windows import ChooseGame
             if self.game_over:
                 self.cursor.execute(f"""UPDATE data_player{self.winner_id} 
-                SET bank = bank + ? WHERE id = ?""", (10, self.winner_id))
+                SET value = value + 10 WHERE id = 0""")
                 self.conn.commit()
             self.window.show_view(ChooseGame())
 
@@ -175,3 +191,14 @@ class TennisGame(arcade.View):
             self.right_paddle.move_up()
         elif key == arcade.key.DOWN:
             self.right_paddle.move_down()
+
+
+def main():
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT)
+    game_view = TennisGame()
+    window.show_view(game_view)
+    arcade.run()
+
+
+if __name__ == "__main__":
+    main()

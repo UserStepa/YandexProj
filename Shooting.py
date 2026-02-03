@@ -66,7 +66,7 @@ class Pest(arcade.Sprite):
         min_y += self.height / 2
         max_y -= self.height / 2
 
-        # Генерируем случайную позицию
+        # Случайная позиция
         self.center_x = random.uniform(min_x, max_x)
         self.center_y = random.uniform(min_y, max_y)
 
@@ -109,6 +109,9 @@ class ShootingGame(arcade.View):
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
 
+        self.player1_texture = self.load_texture("data_player1", 1)
+        self.player2_texture = self.load_texture("data_player2", 2)
+
         # Прицелы игроков
         self.crosshair_1 = arcade.Sprite("images/shooting/crosshair_blue.png",
             center_x=225, center_y=325, scale=1.2)
@@ -134,6 +137,12 @@ class ShootingGame(arcade.View):
         self.hit_tolerance_moving = 30
 
         self.setup()
+
+    def load_texture(self, name, id):
+        self.cursor.execute(f"SELECT name FROM {name} WHERE value = 1")
+        result = self.cursor.fetchone()
+        texture = arcade.load_texture(f"images/data_player{id}/{result[0]}.png")
+        return texture
 
     def setup(self):
         self.score_left = 0
@@ -241,13 +250,12 @@ class ShootingGame(arcade.View):
 
         self.sprite_list.draw()
 
-        arcade.draw_text(f"{self.score_left}/10",
-                         50, self.window.height - 50, arcade.color.BLUE, 30,
-                         anchor_x="left", anchor_y="top", bold=True)
+        # Аватары
+        arcade.draw_texture_rect(self.player1_texture, arcade.rect.XYWH(
+            SCREEN_WIDTH // 2 - 65, SCREEN_HEIGHT - 50, 70, 70))
 
-        arcade.draw_text(f"{self.score_right}/10",
-                         self.window.width - 50, self.window.height - 50, arcade.color.RED, 30,
-                         anchor_x="right", anchor_y="top", bold=True)
+        arcade.draw_texture_rect(self.player2_texture, arcade.rect.XYWH(
+            SCREEN_WIDTH // 2 + 65, SCREEN_HEIGHT - 50, 70, 70))
 
     def on_update(self, delta_time):
         if not self.game_started or self.game_over:
@@ -263,13 +271,13 @@ class ShootingGame(arcade.View):
 
         if self.score_left >= 10:
             self.game_over = True
-            self.cursor.execute("SELECT name FROM data_player1 WHERE id = 1", )
+            self.cursor.execute("SELECT name FROM data_player1 WHERE id = 0", )
             result = self.cursor.fetchone()
             self.winner = result[0]
             self.winner_id = 1
         elif self.score_right >= 10:
             self.game_over = True
-            self.cursor.execute("SELECT name FROM data_player2 WHERE id = 2")
+            self.cursor.execute("SELECT name FROM data_player2 WHERE id = 0")
             result = self.cursor.fetchone()
             self.winner = result[0]
             self.winner_id = 2
@@ -315,8 +323,7 @@ class ShootingGame(arcade.View):
         distance = ((crosshair.center_x - target.center_x) ** 2 +
                     (crosshair.center_y - target.center_y) ** 2) ** 0.5
 
-        tolerance = self.hit_tolerance_stationary if is_stationary else self.hit_tolerance_moving
-        return distance < tolerance
+        return distance < self.hit_tolerance_moving
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.SPACE:
@@ -327,7 +334,7 @@ class ShootingGame(arcade.View):
             from Game_windows import ChooseGame
             if self.game_over:
                 self.cursor.execute(f"""UPDATE data_player{self.winner_id} 
-                SET bank = bank + ? WHERE id = ?""", (10, self.winner_id))
+                SET value = value + 10 WHERE id = 0""")
                 self.conn.commit()
             self.window.show_view(ChooseGame())
 
@@ -361,8 +368,8 @@ class ShootingGame(arcade.View):
 
 def main():
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT)
-    shooting_game = ShootingGame()
-    window.show_view(shooting_game)
+    game_view = ShootingGame()
+    window.show_view(game_view)
     arcade.run()
 
 

@@ -11,6 +11,10 @@ SCREEN_TITLE = "Таймер-дуэль"
 class TimerGame(arcade.View):
     def __init__(self):
         super().__init__()
+
+        self.conn = sqlite3.connect("2players_db.sqlite")
+        self.cursor = self.conn.cursor()
+
         # Состояния игры
         self.game_state = "INSTRUCTION"  # INSTRUCTION, COUNTDOWN, TIMER_RUNNING, RESULTS
 
@@ -24,6 +28,8 @@ class TimerGame(arcade.View):
         self.player2_time = None
         self.player1_stopped = False
         self.player2_stopped = False
+        self.player1_texture = self.load_texture("data_player1", 1)
+        self.player2_texture = self.load_texture("data_player2", 2)
 
         # Таймер обратного отсчета
         self.countdown_time = 3
@@ -46,13 +52,17 @@ class TimerGame(arcade.View):
 
         self.result_text = ""
 
-        self.conn = sqlite3.connect("2players_db.sqlite")
-        self.cursor = self.conn.cursor()
-
         self.winner = None
         self.winner_id = 0
 
         self.setup()
+
+    def load_texture(self, name, id):
+        self.cursor.execute(
+            f"SELECT name FROM {name} WHERE value = 1")
+        result = self.cursor.fetchone()
+        texture = arcade.load_texture(f"images/data_player{id}/{result[0]}.png")
+        return texture
 
     def setup(self):
         self.game_state = "INSTRUCTION"
@@ -154,60 +164,44 @@ class TimerGame(arcade.View):
                          36,
                          anchor_x="center")
 
-        # Поле левого игрока
-        arcade.draw_rect_filled(arcade.rect.XYWH(SCREEN_WIDTH // 4,
+        # Аватар левого игрока
+        arcade.draw_texture_rect(self.player1_texture, arcade.rect.XYWH(SCREEN_WIDTH // 4,
                                      SCREEN_HEIGHT // 4,
-                                     200, 100),
-                                     self.player1_color)
+                                     150, 150))
 
         # Результат левого игрока
         if self.player1_stopped:
             result_text = f"{self.player1_time:.2f}"
             color = arcade.color.GOLD
         else:
-            result_text = "Ждем..."
+            result_text = "W  Ждем..."
             color = arcade.color.WHITE
 
         arcade.draw_text(result_text,
                          SCREEN_WIDTH // 4,
-                         SCREEN_HEIGHT // 4,
+                         SCREEN_HEIGHT // 4 - 100,
                          color,
                          32,
                          anchor_x="center")
 
-        arcade.draw_text("W",
-                         SCREEN_WIDTH // 4,
-                         SCREEN_HEIGHT // 4 - 60,
-                         arcade.color.WHITE,
-                         20,
-                         anchor_x="center")
-
-        # Поле правого игрока
-        arcade.draw_rect_filled(arcade.rect.XYWH(SCREEN_WIDTH * 3 // 4,
+        # Аватар правого игрока
+        arcade.draw_texture_rect(self.player2_texture, arcade.rect.XYWH(SCREEN_WIDTH * 3 // 4,
                                      SCREEN_HEIGHT // 4,
-                                     200, 100),
-                                     self.player2_color)
+                                     150, 150))
 
         # Результат правого игрока
         if self.player2_stopped:
             result_text = f"{self.player2_time:.2f}"
             color = arcade.color.GOLD
         else:
-            result_text = "Ждем..."
+            result_text = "↑ Ждем..."
             color = arcade.color.WHITE
 
         arcade.draw_text(result_text,
                          SCREEN_WIDTH * 3 // 4,
-                         SCREEN_HEIGHT // 4,
+                         SCREEN_HEIGHT // 4 - 100,
                          color,
                          32,
-                         anchor_x="center")
-
-        arcade.draw_text("↑",
-                         SCREEN_WIDTH * 3 // 4,
-                         SCREEN_HEIGHT // 4 - 60,
-                         arcade.color.WHITE,
-                         20,
                          anchor_x="center")
 
         arcade.draw_text("Нажмите свою кнопку, когда думаете, что прошло целевое время",
@@ -218,11 +212,11 @@ class TimerGame(arcade.View):
                          anchor_x="center")
 
     def draw_results(self):
-        self.cursor.execute("SELECT name FROM data_player1 WHERE id = 1", )
+        self.cursor.execute("SELECT name FROM data_player1 WHERE id = 0", )
         result = self.cursor.fetchone()
         self.name_1 = result[0]
 
-        self.cursor.execute("SELECT name FROM data_player2 WHERE id = 2", )
+        self.cursor.execute("SELECT name FROM data_player2 WHERE id = 0", )
         result = self.cursor.fetchone()
         self.name_2 = result[0]
 
@@ -265,11 +259,13 @@ class TimerGame(arcade.View):
         if diff1 < diff2:
             self.winner_id = 1
             self.winner = self.name_1
-            winner_text = f"ПОБЕДИТЕЛЬ: {self.winner}! (+10🪙)"
+            winner_text = f"ПОБЕДИТЕЛЬ: {self.winner}!"
+            winner_color = self.player1_color
         elif diff2 < diff1:
             self.winner_id = 2
             self.winner = self.name_2
-            winner_text = f"ПОБЕДИТЕЛЬ: {self.winner}! (+10🪙)"
+            winner_text = f"ПОБЕДИТЕЛЬ: {self.winner}!"
+            winner_color = self.player2_color
         else:
             winner_text = "НИЧЬЯ!"
             winner_color = arcade.color.GOLD
@@ -277,7 +273,7 @@ class TimerGame(arcade.View):
         arcade.draw_text(winner_text,
                          SCREEN_WIDTH // 2,
                          SCREEN_HEIGHT // 2 - 100,
-                         arcade.color.GOLD,
+                         winner_color,
                          42,
                          anchor_x="center",
                          bold=True)
@@ -295,8 +291,9 @@ class TimerGame(arcade.View):
             from Game_windows import ChooseGame
             if self.game_state == "RESULTS" and self.winner_id != 0:
                 self.cursor.execute(f"""UPDATE data_player{self.winner_id} 
-                            SET bank = bank + ? WHERE id = ?""", (10, self.winner_id))
+                    SET value = value + 10 WHERE id = 0""")
                 self.conn.commit()
+                self.start_game()
             self.window.show_view(ChooseGame())
 
 
@@ -318,6 +315,9 @@ class TimerGame(arcade.View):
 
         elif self.game_state == "RESULTS":
             if key == arcade.key.SPACE:
+                self.cursor.execute(f"""UPDATE data_player{self.winner_id} 
+                    SET value = value + 10 WHERE id = 0""")
+                self.conn.commit()
                 self.setup()
                 self.start_game()
 
@@ -328,3 +328,14 @@ class TimerGame(arcade.View):
             elapsed = time.time() - self.countdown_start
             if elapsed >= self.countdown_time:
                 self.start_timer()
+
+
+def main():
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT)
+    game_view = TimerGame()
+    window.show_view(game_view)
+    arcade.run()
+
+
+if __name__ == "__main__":
+    main()
