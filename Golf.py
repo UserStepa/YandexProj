@@ -7,15 +7,14 @@ SCREEN_WIDTH = 900
 SCREEN_HEIGHT = 650
 
 
-class Ball:
-    def __init__(self, x, y):
+class Ball(arcade.Sprite):
+    def __init__(self, texture, scale, x, y):
+        super().__init__(texture, scale)
         self.in_pocket = False
         self.velocity_x = 0
         self.velocity_y = 0
-
-        self.sprite = arcade.Sprite(f"images/golf/ball.png", scale=0.25)
-        self.sprite.center_x = x
-        self.sprite.center_y = y
+        self.center_x = x
+        self.center_y = y
 
     def update(self):
         self.velocity_x *= 0.98
@@ -26,18 +25,18 @@ class Ball:
         if abs(self.velocity_y) < 0.1:
             self.velocity_y = 0
 
-        self.sprite.center_x += self.velocity_x
-        self.sprite.center_y += self.velocity_y
+        self.center_x += self.velocity_x
+        self.center_y += self.velocity_y
 
         # Отскок от границ
-        if self.sprite.center_x < 60 or self.sprite.center_x > SCREEN_WIDTH - 60:
+        if self.center_x < 60 or self.center_x > SCREEN_WIDTH - 60:
             self.velocity_x *= -0.9
-        if self.sprite.center_y < 60 or self.sprite.center_y > SCREEN_HEIGHT - 60:
+        if self.center_y < 60 or self.center_y > SCREEN_HEIGHT - 60:
             self.velocity_y *= -0.9
 
         # Проверка на попадание в лузку
-        if (self.sprite.center_x < 30 or self.sprite.center_x > SCREEN_WIDTH - 30 or
-                self.sprite.center_y < 30 or self.sprite.center_y > SCREEN_HEIGHT - 30):
+        if (self.center_x < 30 or self.center_x > SCREEN_WIDTH - 30 or
+                self.center_y < 30 or self.center_y > SCREEN_HEIGHT - 30):
             self.in_pocket = True
 
     def is_stopped(self):
@@ -53,7 +52,7 @@ class GolfGame(arcade.View):
 
         self.name_1 = 'Игрок 1'
         self.name_2 = 'Игрок 2'
-        self.game_time = 15
+        self.game_time = 60
         self.time_left = self.game_time
         self.score = 0
         self.player_turn = 1
@@ -80,12 +79,11 @@ class GolfGame(arcade.View):
         self.setup()
 
     def setup(self):
-
-        self.cursor.execute("SELECT name FROM data_player1 WHERE id = 0", )
+        self.cursor.execute("SELECT name FROM data_player1 WHERE id = 0")
         result = self.cursor.fetchone()
         self.name_1 = result[0]
 
-        self.cursor.execute("SELECT name FROM data_player2 WHERE id = 0", )
+        self.cursor.execute("SELECT name FROM data_player2 WHERE id = 0")
         result = self.cursor.fetchone()
         self.name_2 = result[0]
 
@@ -112,8 +110,14 @@ class GolfGame(arcade.View):
             pocket_x = random.randint(100, SCREEN_WIDTH - 100)
             pocket_y = random.randint(100, SCREEN_HEIGHT - 100)
 
-        self.ball = Ball(ball_x, ball_y)
-        self.ball_sprites.append(self.ball.sprite)
+        # Купленный дизайн
+        self.cursor.execute("SELECT value FROM data_players WHERE id = 2")
+        result = self.cursor.fetchone()
+        if result[0] == 1:
+            self.ball = Ball("images/golf/ball_designer.png", 0.075, ball_x, ball_y)
+        else:
+            self.ball = Ball("images/golf/ball.png", 0.25, ball_x, ball_y)
+        self.ball_sprites.append(self.ball)
 
         self.pocket = arcade.Sprite("images/golf/pocket.png", scale=0.5)
         self.pocket.center_x = pocket_x
@@ -139,7 +143,6 @@ class GolfGame(arcade.View):
                              SCREEN_HEIGHT // 2, arcade.color.BLACK, 24, anchor_x="center")
             return
 
-
         self.pocket_sprites.draw()
         self.ball_sprites.draw()
         self.flag_sprites.draw()
@@ -148,11 +151,12 @@ class GolfGame(arcade.View):
             distance = 80
             angle_rad = math.radians(self.aim_angle)
 
-            end_x = self.ball.sprite.center_x + math.cos(angle_rad) * distance
-            end_y = self.ball.sprite.center_y + math.sin(angle_rad) * distance
+            # Изменено: обращаемся напрямую к center_x и center_y мяча
+            end_x = self.ball.center_x + math.cos(angle_rad) * distance
+            end_y = self.ball.center_y + math.sin(angle_rad) * distance
 
-            arcade.draw_line(self.ball.sprite.center_x,
-                             self.ball.sprite.center_y,
+            arcade.draw_line(self.ball.center_x,
+                             self.ball.center_y,
                              end_x, end_y,
                              arcade.color.RED, 3)
 
@@ -238,8 +242,8 @@ class GolfGame(arcade.View):
 
             if not self.ball.in_pocket and self.pocket:
                 distance = math.sqrt(
-                    (self.ball.sprite.center_x - self.pocket.center_x) ** 2 +
-                    (self.ball.sprite.center_y - self.pocket.center_y) ** 2
+                    (self.ball.center_x - self.pocket.center_x) ** 2 +
+                    (self.ball.center_y - self.pocket.center_y) ** 2
                 )
 
                 if distance < 30:

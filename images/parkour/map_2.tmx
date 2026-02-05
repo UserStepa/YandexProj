@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="13" height="37" tilewidth="70" tileheight="70" infinite="0" nextlayerid="6" nextobjectid="1">
+ <tileset firstgid="1" source="tiles_spritesheet.tsx"/>
+ <layer id="1" name="walls" width="13" height="37">
+  <data encoding="base64" compression="zlib">
+   eJytkqsPwjAQh2sICYJkGUEAmkdwPAQGMJiBmQH8DCjcDAIwPBKC57+lDXfJcel63cKXfNnW/u7aUpT6parys2LfWxCZQ4bnFMshJe2owD4MXdLjBt4d+VDbInWco7ZMxLEA6nwJQOSpfWhfQo2Lh2PuBErwu3L1Sy1jyBmeA49ePqRsPZ+zSIy1Pcf8jojEoCJPmn2DvuTJ43p1Nr7IyDfIe83Rz3BR3/3vWc3Ec28SE49esTCfB9vd8XlDhfgm8jrpjmgd/g+QJijVIgdLJhTWpyy1EXHI5m39XfQL5K/wzs+9yagx+UToO1Pf83TgOwHbZC3X70xrpkLOsIb1EmIkmPzBD/PfMUE=
+  </data>
+ </layer>
+ <layer id="2" name="lava" width="13" height="37">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjILhCdKhmBSgQwuHjIJRgAMAAJE+APs=
+  </data>
+ </layer>
+ <layer id="3" name="ladders" width="13" height="37">
+  <data encoding="base64" compression="zlib">
+   eJxjYEAABQbSAb30DBagMIj1DEegQCc9g8XeUUAcUKCTnlEwCmgNAAD8AYE=
+  </data>
+ </layer>
+ <layer id="4" name="collision" width="13" height="37" visible="0">
+  <data encoding="base64" compression="zlib">
+   eJxjYKAcBGPhI4spYxHDpRcEmoHYmUy3cKOZAcLZBPQ4I+nDJseOhGFiMEwsQFcPcx8+txEyH588rvCmpjpkvjMaTSlAt48YN1IKsMWrOxQzINHoailJB/iAOw5xcsMCWR+u9EetcCYmXVEzTgnFhTMWdfjikJi8h0s/Ib+jq6c0zyCXddjilFTzlclQD7MD3d/44oOQu8qhauJx6CEmjZGSR/GlDVpiAPdvJs4=
+  </data>
+ </layer>
+ <layer id="5" name="boom" width="13" height="37">
+  <data encoding="base64" compression="zlib">
+   eJxjYCAdMJKhZxTQBwxk3Iymi1Ew1MFoGsYNRsOGNgAAHYwABg==
+  </data>
+ </layer>
+</map>

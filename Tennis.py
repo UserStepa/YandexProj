@@ -11,12 +11,12 @@ PADDLE_COLOR = arcade.color.WHITE
 PADDLE_SPEED = 80
 PADDLE_SCALE = 0.3
 
-BALL_SCALE = 0.2
 BALL_SPEED = 200
 
+
 class Ball(arcade.Sprite):
-    def __init__(self, scale):
-        super().__init__("images/tennis/ball.png", scale)
+    def __init__(self, texture_ball, scale):
+        super().__init__(texture_ball, scale)
         self.reset()
 
     def reset(self):
@@ -70,10 +70,17 @@ class TennisGame(arcade.View):
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
 
+        # Купленный дизайн
+        self.cursor.execute("SELECT value FROM data_players WHERE id = 1")
+        result = self.cursor.fetchone()
+        if result[0] == 1:
+            self.ball = Ball("images/tennis/ball_designer.png", 0.075)
+        else:
+            self.ball = Ball("images/tennis/ball.png", 0.2)
+
         self.player1_texture = self.load_texture("data_player1", 1)
         self.player2_texture = self.load_texture("data_player2", 2)
 
-        self.ball = Ball(BALL_SCALE)
         self.left_paddle = Paddle(PADDLE_WIDTH / 2, SCREEN_HEIGHT / 2)
         self.right_paddle = Paddle(SCREEN_WIDTH - PADDLE_WIDTH / 2, SCREEN_HEIGHT / 2)
         self.sprite_list = arcade.SpriteList()

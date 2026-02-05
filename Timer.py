@@ -15,6 +15,15 @@ class TimerGame(arcade.View):
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
 
+        self.clock = False
+        self.cursor.execute("SELECT value FROM data_players WHERE id = 5")
+        result = self.cursor.fetchone()
+        if result[0] == 1:
+            self.texture_clock = arcade.load_texture("images/timer/clock.png")
+            self.clock = True
+        else:
+            self.clock = False
+
         # Состояния игры
         self.game_state = "INSTRUCTION"  # INSTRUCTION, COUNTDOWN, TIMER_RUNNING, RESULTS
 
@@ -125,7 +134,6 @@ class TimerGame(arcade.View):
         countdown_value = self.countdown_time - int(elapsed)
 
         if countdown_value > 0:
-            # Отображение обратного отсчета
             arcade.draw_text(str(countdown_value),
                              SCREEN_WIDTH // 2,
                              SCREEN_HEIGHT // 2,
@@ -133,7 +141,6 @@ class TimerGame(arcade.View):
                              120,
                              anchor_x="center",
                              bold=True)
-
             # Цель
             arcade.draw_text(f"Остановите на {self.target_time} сек.",
                              SCREEN_WIDTH // 2,
@@ -148,18 +155,28 @@ class TimerGame(arcade.View):
         self.current_time = time.time() - self.start_time
 
         # Основной таймер
+        if self.clock:
+            arcade.draw_texture_rect(self.texture_clock, arcade.rect.XYWH(
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 120,
+                250, 300))
+            color = arcade.color.DARK_GREEN
+            size = 70
+        else:
+            color = self.highlight_color
+            size = 120
+
         arcade.draw_text(f"{self.current_time:.2f}",
                          SCREEN_WIDTH // 2,
                          SCREEN_HEIGHT // 2 + 50,
-                         self.highlight_color,
-                         96,
+                         color,
+                         size,
                          anchor_x="center",
                          bold=True)
 
         # Целевое время
         arcade.draw_text(f"Цель: {self.target_time} сек.",
                          SCREEN_WIDTH // 2,
-                         SCREEN_HEIGHT // 2 - 50,
+                         SCREEN_HEIGHT // 2 - 100,
                          self.text_color,
                          36,
                          anchor_x="center")
@@ -185,9 +202,9 @@ class TimerGame(arcade.View):
                          anchor_x="center")
 
         # Аватар правого игрока
-        arcade.draw_texture_rect(self.player2_texture, arcade.rect.XYWH(SCREEN_WIDTH * 3 // 4,
-                                     SCREEN_HEIGHT // 4,
-                                     150, 150))
+        arcade.draw_texture_rect(self.player2_texture, arcade.rect.XYWH(
+            SCREEN_WIDTH * 3 // 4, SCREEN_HEIGHT // 4,
+            150, 150))
 
         # Результат правого игрока
         if self.player2_stopped:

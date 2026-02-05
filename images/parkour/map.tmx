@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="13" height="37" tilewidth="70" tileheight="70" infinite="0" nextlayerid="7" nextobjectid="1">
+ <tileset firstgid="1" source="tiles_spritesheet.tsx"/>
+ <layer id="1" name="walls" width="13" height="37">
+  <data encoding="base64" compression="zlib">
+   eJydUjEKwkAQvCKoIEhEEB8ggl0aJYWNVj7ARrATQXyAbQ47EQQLkcPPuod7uCx7m4sDA7nNzM54xhgZW+Q/SPF5TavhTgd8Ag9kPlc8DhnDkp2PwB6wT2YrZMCO6d+oD56c7cxJhx3q35E+1OtQr/WnGBCfY7syYJsxI5qUjAxJ+zn2PqblnkdCnjG/uwuUdnK91I2+i6HuW+GYCB7+/8UyPLs1+/lv8SyFzBlwquRoHVyNZ2CaowDehfkaeCZZlpw5xsLMIjn2kQ7UUylaiqGS43HBbgvFUxCm5ExqOl3JszVyv5An3bvkid27n1dKDkXFzlx/Mt/uUifJ4/WbhCytV6lkWOwzUvqEHbYBX8BbQ08HGc4fi+lLag==
+  </data>
+ </layer>
+ <layer id="2" name="boom" width="13" height="37">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgF5ADGgXYAlQE+/ww3v5IKRrr/8QFGhtHwGQXUByMpTQEAJHwACA==
+  </data>
+ </layer>
+ <layer id="4" name="collision" width="13" height="37" visible="0">
+  <data encoding="base64" compression="zlib">
+   eJydVNsJgEAM889fx3AMwVUcwwEcwIFFsFBCUtMrFPEuSR/Xu2nitn8+Yg7vxaxNzexhh8HpxMjf0D8IRuW0gOYCulVOmfuHVRYc1JrBM8Y9L1Z7/ld7uO7WFL1zebkexOK5qNw6hhzsucI7s4+1dPpQ4ZTO6Lwx/Yus53sUcdTdrfJ2sSzOyJxnu7+9s+B0z8jJBznIizXW986bGWfk1IAaap5YToyzFfHw/VU4Z947d8fxER5yHmeULc8=
+  </data>
+ </layer>
+ <layer id="5" name="ladders" width="13" height="37">
+  <data encoding="base64" compression="zlib">
+   eJxjYBj6QIROekYBBAyXsBtNN8MXjMbTKBgqAABicgB5
+  </data>
+ </layer>
+ <layer id="6" name="lava" width="13" height="37">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGAalgOhSTAjigGAYAVkABPw==
+  </data>
+ </layer>
+</map>

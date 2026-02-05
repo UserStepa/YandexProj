@@ -114,13 +114,16 @@ class ShootingGame(arcade.View):
 
         # Прицелы игроков
         self.crosshair_1 = arcade.Sprite("images/shooting/crosshair_blue.png",
-            center_x=225, center_y=325, scale=1.2)
+                                         center_x=225, center_y=325, scale=1.2)
         self.crosshair_2 = arcade.Sprite("images/shooting/crosshair_red.png",
-            center_x=675, center_y=325, scale=1.2)
+                                         center_x=675, center_y=325, scale=1.2)
 
-        self.sprite_list = arcade.SpriteList()
-        self.pests_left = arcade.SpriteList()
-        self.pests_right = arcade.SpriteList()
+        self.pest_batch = arcade.SpriteList()
+        self.all_sprites_batch = arcade.SpriteList()
+
+        # Отдельные списки для удобства доступа
+        self.pests_left = []
+        self.pests_right = []
 
         self.score_left = 0
         self.score_right = 0
@@ -135,6 +138,9 @@ class ShootingGame(arcade.View):
 
         # Настройки попадания
         self.hit_tolerance_moving = 30
+
+        # Текстуры вредителей
+        self.texture_pests = []
 
         self.setup()
 
@@ -153,11 +159,14 @@ class ShootingGame(arcade.View):
 
         self.pests_right.clear()
         self.pests_left.clear()
-        self.sprite_list.clear()
+        self.pest_batch.clear()
+        self.all_sprites_batch.clear()
 
-        self.texture_pests = [arcade.load_texture(f"images/shooting/rat.png"),
-                              arcade.load_texture(f"images/shooting/cockroach.png"),
-                              arcade.load_texture(f"images/shooting/fly.png")]
+        self.texture_pests = [
+            arcade.load_texture("images/shooting/rat.png"),
+            arcade.load_texture("images/shooting/cockroach.png"),
+            arcade.load_texture("images/shooting/fly.png")
+        ]
 
         # Крысы (нижняя часть экрана)
         for _ in range(2):
@@ -165,17 +174,17 @@ class ShootingGame(arcade.View):
             speed = random.uniform(2, 3)
 
             pest_left = Pest(texture=texture, size=0.15, side=1,
-            window_width=self.window.width, window_height=self.window.height,
-            speed=speed, vertical_zone='bottom')
+                             window_width=self.window.width, window_height=self.window.height,
+                             speed=speed, vertical_zone='bottom')
 
             pest_right = Pest(texture=texture, size=0.15, side=2,
-                        window_width=self.window.width, window_height=self.window.height,
-                        speed=speed, vertical_zone='bottom')
+                              window_width=self.window.width, window_height=self.window.height,
+                              speed=speed, vertical_zone='bottom')
 
             self.pests_left.append(pest_left)
             self.pests_right.append(pest_right)
-            self.sprite_list.append(pest_left)
-            self.sprite_list.append(pest_right)
+            self.pest_batch.append(pest_left)
+            self.pest_batch.append(pest_right)
 
         # Тараканы (средняя часть экрана)
         for _ in range(3):
@@ -192,8 +201,8 @@ class ShootingGame(arcade.View):
 
             self.pests_left.append(pest_left)
             self.pests_right.append(pest_right)
-            self.sprite_list.append(pest_left)
-            self.sprite_list.append(pest_right)
+            self.pest_batch.append(pest_left)
+            self.pest_batch.append(pest_right)
 
         # Мухи (верхняя часть экрана)
         for _ in range(5):
@@ -210,11 +219,12 @@ class ShootingGame(arcade.View):
 
             self.pests_left.append(pest_left)
             self.pests_right.append(pest_right)
-            self.sprite_list.append(pest_left)
-            self.sprite_list.append(pest_right)
+            self.pest_batch.append(pest_left)
+            self.pest_batch.append(pest_right)
 
-        self.sprite_list.append(self.crosshair_1)
-        self.sprite_list.append(self.crosshair_2)
+        # Добавляем прицелы в общий batch
+        self.all_sprites_batch.append(self.crosshair_1)
+        self.all_sprites_batch.append(self.crosshair_2)
 
         self.crosshair_1.center_x = 225
         self.crosshair_1.center_y = 325
@@ -224,21 +234,23 @@ class ShootingGame(arcade.View):
     def on_draw(self):
         self.clear()
 
+        # Отрисовка фона
         arcade.draw_texture_rect(self.texture, arcade.rect.XYWH(
             self.window.width // 2, self.window.height // 2,
             self.window.width, self.window.height))
 
+        # Разделительная линия
         arcade.draw_line(self.window.width / 2, 0,
-            self.window.width / 2, self.window.height,
-            arcade.color.WHITE, 2)
+                         self.window.width / 2, self.window.height,
+                         arcade.color.WHITE, 2)
 
         if not self.game_started and not self.game_over:
             arcade.draw_text("Убейте всех вредителей быстрее соперника!",
-                SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50, arcade.color.BLACK, 30, anchor_x="center")
+                             SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50, arcade.color.BLACK, 30, anchor_x="center")
             arcade.draw_text("Нажмите: Space - чтобы начать, Esc - чтобы выйти",
-                SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.BLACK, 20, anchor_x="center")
+                             SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.BLACK, 20, anchor_x="center")
             arcade.draw_text("Выстрел: E (левый игрок), . (правый игрок)",
-                SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50, arcade.color.BLACK, 20, anchor_x="center")
+                             SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50, arcade.color.BLACK, 20, anchor_x="center")
             return
 
         if self.game_over:
@@ -248,30 +260,38 @@ class ShootingGame(arcade.View):
                              SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50, arcade.color.WHITE, 20, anchor_x="center")
             return
 
-        self.sprite_list.draw()
+        self.pest_batch.draw()
+        self.all_sprites_batch.draw()
 
-        # Аватары
+        # Аватары игроков
         arcade.draw_texture_rect(self.player1_texture, arcade.rect.XYWH(
             SCREEN_WIDTH // 2 - 65, SCREEN_HEIGHT - 50, 70, 70))
 
         arcade.draw_texture_rect(self.player2_texture, arcade.rect.XYWH(
             SCREEN_WIDTH // 2 + 65, SCREEN_HEIGHT - 50, 70, 70))
 
+        # Отображение счета
+        arcade.draw_text(f"Счет: {self.score_left}",
+                         SCREEN_WIDTH / 4, SCREEN_HEIGHT - 30,
+                         arcade.color.WHITE, 20, anchor_x="center")
+        arcade.draw_text(f"Счет: {self.score_right}",
+                         SCREEN_WIDTH * 3 / 4, SCREEN_HEIGHT - 30,
+                         arcade.color.WHITE, 20, anchor_x="center")
+
     def on_update(self, delta_time):
         if not self.game_started or self.game_over:
             return
 
-        for i in self.pests_left:
-            i.update()
-        for i in self.pests_right:
-            i.update()
+        # Обновление всех вредителей
+        for pest in self.pest_batch:
+            pest.update()
 
         self._update_crosshair_movement()
         self._constrain_crosshairs()
 
         if self.score_left >= 10:
             self.game_over = True
-            self.cursor.execute("SELECT name FROM data_player1 WHERE id = 0", )
+            self.cursor.execute("SELECT name FROM data_player1 WHERE id = 0")
             result = self.cursor.fetchone()
             self.winner = result[0]
             self.winner_id = 1
@@ -345,18 +365,20 @@ class ShootingGame(arcade.View):
         # Стрельба левого игрока (E)
         elif key == arcade.key.E:
             hit_any = False
-            for i in list(self.pests_left):
-                if self._check_hit(self.crosshair_1, i, is_stationary=False):
-                    i.remove_from_sprite_lists()
+            for pest in list(self.pests_left):
+                if pest in self.pest_batch and self._check_hit(self.crosshair_1, pest):
+                    self.pest_batch.remove(pest)
+                    self.pests_left.remove(pest)
                     self.score_left += 1
                     hit_any = True
 
         # Стрельба правого игрока (.)
         elif key == arcade.key.PERIOD:
             hit_any = False
-            for i in list(self.pests_right):
-                if self._check_hit(self.crosshair_2, i, is_stationary=False):
-                    i.remove_from_sprite_lists()
+            for pest in list(self.pests_right):
+                if pest in self.pest_batch and self._check_hit(self.crosshair_2, pest):
+                    self.pest_batch.remove(pest)
+                    self.pests_right.remove(pest)
                     self.score_right += 1
                     hit_any = True
 

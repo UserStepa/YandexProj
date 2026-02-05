@@ -18,6 +18,15 @@ class StartView(arcade.View):
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
 
+        self.texture_png = arcade.load_texture('images/game_background.png')
+
+        self.cursor.execute("SELECT value FROM data_players WHERE id = 4")
+        result = self.cursor.fetchone()
+        if result[0] == 1:
+            self.texture = True
+        else:
+            self.texture = False
+
         # Переменные игроков
         self.player1_name = self.load_player_name('data_player1')
         self.player2_name = self.load_player_name('data_player2')
@@ -37,7 +46,6 @@ class StartView(arcade.View):
     def on_show_view(self):
         self.setup_ui()
         self.manager.enable()
-        arcade.set_background_color(arcade.color.DARK_GREEN)
 
     def setup_ui(self):
         from arcade.gui import (
@@ -60,7 +68,7 @@ class StartView(arcade.View):
         # Магазин
         shop_button = UIFlatButton(text="🛒 МАГАЗИН", width=150,
                                    height=40, font_size=16, font_name="Arial")
-        shop_button.on_click = self.on_shop_click
+        shop_button.on_click = lambda event: self.on_shop_click(event,name='data_players')
         bank_shop_container.add(shop_button)
         v_box.add(bank_shop_container)
 
@@ -79,7 +87,8 @@ class StartView(arcade.View):
 
         # Поле ввода игрока 1
         self.player1_input = UIInputText(text=self.player1_name, width=200,
-                                         height=35, font_size=18, font_name="Arial", multiline=False)
+                                         height=35, font_size=18, font_name="Arial", multiline=False,
+                                         border_color=arcade.color.BLACK, text_color=arcade.color.BLACK)
         self.player1_input.on_change = lambda event: self.change_player_name(event, name='data_player1')
         player1_vbox.add(self.player1_input)
 
@@ -91,7 +100,7 @@ class StartView(arcade.View):
         # Кнопка "Магазин" для игрока 1
         shop_btn_1 = UIFlatButton(text="🛒 ЛИЧНЫЙ МАГАЗИН", width=180,
                                   height=45, font_size=14, font_name="Arial")
-        shop_btn_1.on_click =  lambda event: self.on_player_shop_click(event,name='data_player1')
+        shop_btn_1.on_click =  lambda event: self.on_shop_click(event,name='data_player1')
         player1_vbox.add(shop_btn_1)
 
         player1_container.add(player1_anchor)
@@ -110,7 +119,8 @@ class StartView(arcade.View):
 
         # Поле ввода игрока 2
         self.player2_input = UIInputText(text=self.player2_name, width=200,
-                                         height=35, font_size=18, font_name="Arial", multiline=False)
+                                         height=35, font_size=18, font_name="Arial", multiline=False,
+                                         border_color=arcade.color.BLACK, text_color=arcade.color.BLACK)
         self.player2_input.on_change = lambda event: self.change_player_name(event, name='data_player2')
         player2_vbox.add(self.player2_input)
 
@@ -122,7 +132,7 @@ class StartView(arcade.View):
         # Кнопка "Магазин" для игрока 2
         shop_btn_2 = UIFlatButton(text="🛒 ЛИЧНЫЙ МАГАЗИН", width=180,
                                   height=45, font_size=14, font_name="Arial")
-        shop_btn_2.on_click =  lambda event: self.on_player_shop_click(event, name='data_player2')
+        shop_btn_2.on_click =  lambda event: self.on_shop_click(event, name='data_player2')
         player2_vbox.add(shop_btn_2)
 
         player2_container.add(player2_anchor)
@@ -134,7 +144,7 @@ class StartView(arcade.View):
         play_button = UIFlatButton(text="▶️ ИГРАТЬ", width=250,
                                    height=70, font_size=22, font_name="Arial", bold=True)
         play_button.on_click = self.on_play_click
-        play_button_container.add(child=play_button, anchor_x="center", anchor_y="center")
+        play_button_container.add(child=play_button, anchor_x="right", anchor_y="bottom")
         v_box.add(play_button_container)
 
         root.add(child=v_box, anchor_x="center", anchor_y="center")
@@ -159,11 +169,8 @@ class StartView(arcade.View):
         self.cursor.execute(f"UPDATE {table_name} SET name = ? WHERE id = 0", (new_name,))
         self.conn.commit()
 
-    def on_player_shop_click(self, event, name):
-        self.window.show_view(Shop_player(name))
-
-    def on_shop_click(self, event):
-        pass
+    def on_shop_click(self, event, name):
+        self.window.show_view(Shop(name))
 
     def on_play_click(self, event):
         choose_game_view = ChooseGame()
@@ -174,6 +181,14 @@ class StartView(arcade.View):
 
     def on_draw(self):
         self.clear()
+
+        if self.texture:
+            arcade.draw_texture_rect(self.texture_png, arcade.rect.XYWH(
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
+                SCREEN_WIDTH, SCREEN_HEIGHT))
+        else:
+            self.background_color = arcade.color.DIM_GRAY
+
         self.manager.draw()
 
         arcade.draw_texture_rect(self.player1_texture, arcade.rect.XYWH(
@@ -193,6 +208,18 @@ class ChooseGame(arcade.View):
 
         from arcade.gui import UIManager
         self.manager = UIManager(self.window)
+
+        self.conn = sqlite3.connect("2players_db.sqlite")
+        self.cursor = self.conn.cursor()
+
+        self.texture_png = arcade.load_texture('images/game_background.png')
+
+        self.cursor.execute("SELECT value FROM data_players WHERE id = 4")
+        result = self.cursor.fetchone()
+        if result[0] == 1:
+            self.texture = True
+        else:
+            self.texture = False
 
     def on_show_view(self):
         self.manager.enable()
@@ -221,27 +248,27 @@ class ChooseGame(arcade.View):
         left_container = UIBoxLayout(space_between=15, size_hint=(0.45, 1.0))
 
         # Заголовок командного режима
-        team_title = UILabel(text="🤝 КОМАНДНЫЙ РЕЖИМ", font_size=26,
+        team_title = UILabel(text="КОМАНДНЫЙ РЕЖИМ", font_size=26,
         font_name="Arial", text_color=arcade.color.SKY_BLUE, bold=True, align="center")
         left_container.add(team_title)
         team_description_lines = ["🎮 Играйте вместе с другом",
             "💸 Деньги идут в общий банк", "🏆 Общие достижения"]
         for line in team_description_lines:
             line_label = UILabel(text=line, font_size=14, font_name="Arial",
-            text_color=arcade.color.LIGHT_GRAY, align="center")
+            text_color=arcade.color.BLACK, align="center")
             left_container.add(line_label)
         left_container.add(UISpace(height=10))
 
         # Кнопки игр для командного режима
-        games_team = ["⛳ Гольф", "🎯 ИГРА 2", "🎪 ИГРА 3", "🎳 ИГРА 4", "🎨 ИГРА 5"]
+        games_team = ["⛳ Гольф", "🤖 Арканоид", "🏃 Паркур", "🎳 ИГРА 4"]
         for i, game_text in enumerate(games_team, 1):
             game_btn = UIFlatButton(text=game_text, width=220,
-            height=45, font_size=16, font_name="Arial")
+            height=55, font_size=16, font_name="Arial")
             game_btn.on_click = getattr(self, f"on_team_game{i}_click")
             left_container.add(game_btn)
         modes_container.add(left_container)
         right_container = UIBoxLayout(space_between=15, size_hint=(0.45, 1.0))
-        vs_title = UILabel(text="⚔️ РЕЖИМ ПРОТИВНИКА",
+        vs_title = UILabel(text="РЕЖИМ ПРОТИВНИКА",
         font_size=26, font_name="Arial", text_color=arcade.color.ORANGE_RED,
         bold=True, align="center")
         right_container.add(vs_title)
@@ -249,14 +276,14 @@ class ChooseGame(arcade.View):
             "💸 Деньги идут в личный банк", "🏆 Побеждает сильнейший"]
         for line in vs_description_lines:
             line_label = UILabel(text=line, font_size=14, font_name="Arial",
-            text_color=arcade.color.LIGHT_GRAY, align="center")
+            text_color=arcade.color.BLACK, align="center")
             right_container.add(line_label)
         right_container.add(UISpace(height=10))
 
         # Кнопки игр для режима друг против друга
-        games_vs = ["🎾 Теннис", "🪳 Набег вредителей", "🕰️ Точный таймер", "🎳 ИГРА 4", "🎨 ИГРА 5"]
+        games_vs = ["🎾 Теннис", "🪳 Набег вредителей", "🕰️ Точный таймер", "🎳 ИГРА 4"]
         for i, game_text in enumerate(games_vs, 1):
-            game_btn = UIFlatButton(text=game_text, width=220, height=45,
+            game_btn = UIFlatButton(text=game_text, width=220, height=55,
             font_size=16, font_name="Arial")
             game_btn.on_click = getattr(self, f"on_vs_game{i}_click")
             right_container.add(game_btn)
@@ -280,19 +307,15 @@ class ChooseGame(arcade.View):
         self.window.show_view(GolfGame())
 
     def on_team_game2_click(self, event):
-        print("Выбрана командная игра 2")
-        # Здесь будет переход к выбранной игре
+        from Arcanoid import ArkanoidGame
+        self.window.show_view(ArkanoidGame())
 
     def on_team_game3_click(self, event):
-        print("Выбрана командная игра 3")
-        # Здесь будет переход к выбранной игре
+        from Parkour import ParkourGame
+        self.window.show_view(ParkourGame())
 
     def on_team_game4_click(self, event):
         print("Выбрана командная игра 4")
-        # Здесь будет переход к выбранной игре
-
-    def on_team_game5_click(self, event):
-        print("Выбрана командная игра 5")
         # Здесь будет переход к выбранной игре
 
     # Обработчики для режима друг против друга
@@ -312,10 +335,6 @@ class ChooseGame(arcade.View):
         print("Выбрана игра 4 (режим против друга)")
         # Здесь будет переход к выбранной игре
 
-    def on_vs_game5_click(self, event):
-        print("Выбрана игра 5 (режим против друга)")
-        # Здесь будет переход к выбранной игре
-
     def on_back_click(self, event):
         # Возврат к стартовому окну
         start_view = StartView()
@@ -326,21 +345,43 @@ class ChooseGame(arcade.View):
 
     def on_draw(self):
         self.clear()
+
+        if self.texture:
+            arcade.draw_texture_rect(self.texture_png, arcade.rect.XYWH(
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
+                SCREEN_WIDTH, SCREEN_HEIGHT))
+        else:
+            self.background_color = arcade.color.DIM_GRAY
+
         self.manager.draw()
 
 
-class Shop_player(arcade.View):
+class Shop(arcade.View):
     def __init__(self, player):
         super().__init__()
 
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
 
+        self.texture_png = arcade.load_texture('images/shop_background.png')
+
+        self.cursor.execute("SELECT value FROM data_players WHERE id = 8")
+        result = self.cursor.fetchone()
+        if result[0] == 1:
+            self.texture = True
+        else:
+            self.texture = False
+
         from arcade import gui
         self.ui_manager = gui.UIManager()
         self.ui_manager.enable()
 
         self.player = player
+
+        if self.player == 'data_players':
+            self.text = "Приобретайте улучшения для мини-игр  за деньги заработанные в 'КОМАНДНЫЙ РЕЖИМ'"
+        else:
+            self.text = "Приобретайте аватары за деньги заработанные в 'РЕЖИМ ПРОТИВНИКА'"
 
         self.player_textures = []
         for i in range(1, 9):
@@ -380,7 +421,8 @@ class Shop_player(arcade.View):
 
         self.cursor.execute(f"SELECT name FROM {self.player} WHERE value = 1")
         result = self.cursor.fetchone()
-        self.img_select = result[0]
+        if result:
+            self.img_select = result[0]
 
         self.buttons = []
 
@@ -415,10 +457,16 @@ class Shop_player(arcade.View):
             self.buttons.append(button)
 
         for i in range(8):
-            if values[i][0] == 1:
+
+            if values[i][0] == 1 and self.player == 'data_players':
+                self.buttons[i].text = "Используется"
+            elif values[i][0] == -1 and self.player == 'data_players':
+                self.buttons[i].text = "Использовать"
+            elif values[i][0] == 1:
                 self.buttons[i].text = "Выбрано"
             elif values[i][0] == -1:
                 self.buttons[i].text = "Выбрать"
+
 
         back_button = gui.UIFlatButton(
             text="Назад",
@@ -437,9 +485,16 @@ class Shop_player(arcade.View):
     def on_draw(self):
         self.clear()
 
+        if self.texture:
+            arcade.draw_texture_rect(self.texture_png, arcade.rect.XYWH(
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
+                SCREEN_WIDTH, SCREEN_HEIGHT))
+        else:
+            self.background_color = arcade.color.DIM_GRAY
+
         arcade.draw_text(
-            "Приобретайте аватары за деньги заработанные в режиме \"ДРУГ ПРОТИВ ДРУГА\"",
-            450, 620,
+            self.text,
+            450, 600,
             arcade.color.WHITE,
             font_size=16,
             anchor_x="center",
@@ -496,7 +551,6 @@ class Shop_player(arcade.View):
             if self.balance >= money:
                 self.balance -= money
                 self.cursor.execute(f"UPDATE {self.player} SET value = value - {money} WHERE id = 0")
-                self.conn.commit()
                 self.cursor.execute(f"UPDATE {self.player} SET value = -1 WHERE name = 'img{avatar_index + 1}'")
                 self.conn.commit()
                 self.avatars_purchased[avatar_index] = True
@@ -505,14 +559,29 @@ class Shop_player(arcade.View):
             self.select_avatar(avatar_index)
 
     def select_avatar(self, avatar_index):
-        self.cursor.execute(f"UPDATE {self.player} SET value = -1 WHERE value = 1")
-        self.conn.commit()
-        self.cursor.execute(f"UPDATE {self.player} SET value = 1 WHERE name = 'img{avatar_index + 1}'")
-        self.conn.commit()
+        if self.player == 'data_players':
+            choose = 0
+            self.cursor.execute(f"SELECT value FROM {self.player} WHERE name = 'img{avatar_index + 1}'")
+            value = self.cursor.fetchone()
 
-        self.buttons[int(self.img_select[-1]) - 1].text = 'Выбрать'
-        self.buttons[avatar_index].text = "Выбрано"
-        self.img_select = 'img' + str(avatar_index + 1)
+            if value[0] == 1:
+                choose = -1
+                self.buttons[avatar_index].text = "Использовать"
+            else:
+                choose = 1
+                self.buttons[avatar_index].text = "Используется"
+
+            self.cursor.execute(f"UPDATE {self.player} SET value = {choose} WHERE name = 'img{avatar_index + 1}'")
+            self.conn.commit()
+
+        else:
+            self.cursor.execute(f"UPDATE {self.player} SET value = -1 WHERE value = 1")
+            self.cursor.execute(f"UPDATE {self.player} SET value = 1 WHERE name = 'img{avatar_index + 1}'")
+            self.conn.commit()
+
+            self.buttons[int(self.img_select[-1]) - 1].text = 'Выбрать'
+            self.buttons[avatar_index].text = "Выбрано"
+            self.img_select = 'img' + str(avatar_index + 1)
 
 
 def main():
