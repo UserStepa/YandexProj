@@ -131,7 +131,7 @@ class ParkourGame(arcade.View):
         if not self.game_started and not self.game_over:
             arcade.draw_text("Собирайте монеты, оставайтесь в живых!", SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 140,
                              arcade.color.BLACK, 32, bold=True, anchor_x="center")
-            arcade.draw_text("Управление: влево(A)-вправо(D), прыжок(↑)", SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 70,
+            arcade.draw_text("игрок 1 - влево(A)-вправо(D), игрок 2 - вверх(↑)-вниз(↓)", SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 70,
                              arcade.color.BLACK, 24, bold=True, anchor_x="center")
             arcade.draw_text("Нажмите: Space - чтобы начать, Esc - чтобы выйти", SCREEN_WIDTH // 2,
                              SCREEN_HEIGHT // 2, arcade.color.BLACK, 24, anchor_x="center")

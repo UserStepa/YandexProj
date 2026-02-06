@@ -281,7 +281,7 @@ class ChooseGame(arcade.View):
         right_container.add(UISpace(height=10))
 
         # Кнопки игр для режима друг против друга
-        games_vs = ["🎾 Теннис", "🪳 Набег вредителей", "🕰️ Точный таймер", "🎳 ИГРА 4"]
+        games_vs = ["🎾 Теннис", "🪳 Набег вредителей", "🕰️ Точный таймер", "🐍 Змейка PvP"]
         for i, game_text in enumerate(games_vs, 1):
             game_btn = UIFlatButton(text=game_text, width=220, height=55,
             font_size=16, font_name="Arial")
@@ -332,11 +332,10 @@ class ChooseGame(arcade.View):
         self.window.show_view(TimerGame())
 
     def on_vs_game4_click(self, event):
-        print("Выбрана игра 4 (режим против друга)")
-        # Здесь будет переход к выбранной игре
+        from Snake import SnakeGame
+        self.window.show_view(SnakeGame())
 
     def on_back_click(self, event):
-        # Возврат к стартовому окну
         start_view = StartView()
         self.window.show_view(start_view)
 
@@ -379,7 +378,7 @@ class Shop(arcade.View):
         self.player = player
 
         if self.player == 'data_players':
-            self.text = "Приобретайте улучшения для мини-игр  за деньги заработанные в 'КОМАНДНЫЙ РЕЖИМ'"
+            self.text = "Приобретайте дополнения за деньги заработанные в 'КОМАНДНЫЙ РЕЖИМ'"
         else:
             self.text = "Приобретайте аватары за деньги заработанные в 'РЕЖИМ ПРОТИВНИКА'"
 
