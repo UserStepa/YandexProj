@@ -277,7 +277,7 @@ class SnakeGame(arcade.View):
         self.clear(BACKGROUND_COLOR)
 
         if not self.game_started and not self.game_over:
-            arcade.draw_text("Ешь яблоки и выживи!",
+            arcade.draw_text("Ешьте яблоки и выживайте на одном поле!",
                              SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 100, arcade.color.GOLD, 30, anchor_x="center")
             arcade.draw_text("Нажмите: Space - чтобы начать, Esc - чтобы выйти",
                              SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50, arcade.color.WHITE, 20, anchor_x="center")

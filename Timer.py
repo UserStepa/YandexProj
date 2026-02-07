@@ -15,6 +15,15 @@ class TimerGame(arcade.View):
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
 
+        self.player1_name = self.load_player_name(1)
+        self.player2_name = self.load_player_name(2)
+
+        # Загрузка звуков
+        self.button_sound = arcade.load_sound(":resources:sounds/coin5.wav")
+        self.end_game_sound = arcade.load_sound(":resources:sounds/upgrade5.wav")
+        self.countdown_sound = arcade.load_sound(":resources:sounds/rockHit2.wav")
+        self.start_sound = arcade.load_sound(":resources:sounds/secret2.wav")
+
         self.clock = False
         self.cursor.execute("SELECT value FROM data_players WHERE id = 5")
         result = self.cursor.fetchone()
@@ -43,6 +52,7 @@ class TimerGame(arcade.View):
         # Таймер обратного отсчета
         self.countdown_time = 3
         self.countdown_start = 0
+        self.countdown_played = [False, False, False]  # Флаг проигранных звуков обратного отсчета
 
         # Цвета
         self.background_color = arcade.color.DARK_SLATE_GRAY
@@ -57,14 +67,18 @@ class TimerGame(arcade.View):
             "",
             "Нажмите: Space - чтобы начать, Esc - чтобы выйти.",
             "",
-            "Стоп: W (левый игрок), Стрелка вверх (правый игрок)"]
+            f"Стоп: {self.player1_name}(W), {self.player2_name}(↑)"]
 
         self.result_text = ""
 
-        self.winner = None
         self.winner_id = 0
 
         self.setup()
+
+    def load_player_name(self, player_id):
+        self.cursor.execute(f"SELECT name FROM data_player{player_id} WHERE id = 0")
+        result = self.cursor.fetchone()
+        return result[0] if result else f"Игрок {player_id}"
 
     def load_texture(self, name, id):
         self.cursor.execute(
@@ -79,11 +93,13 @@ class TimerGame(arcade.View):
         self.player2_time = None
         self.player1_stopped = False
         self.player2_stopped = False
+        self.countdown_played = [False, False, False]
 
     def start_game(self):
         self.game_state = "COUNTDOWN"
         self.target_time = random.randint(5, 15)
         self.countdown_start = time.time()
+        arcade.play_sound(self.start_sound)
 
     def start_timer(self):
         self.game_state = "TIMER_RUNNING"
@@ -132,6 +148,12 @@ class TimerGame(arcade.View):
     def draw_countdown(self):
         elapsed = time.time() - self.countdown_start
         countdown_value = self.countdown_time - int(elapsed)
+
+        # Воспроизведение звуков обратного отсчета
+        if countdown_value > 0 and countdown_value <= 3:
+            if not self.countdown_played[countdown_value - 1]:
+                arcade.play_sound(self.countdown_sound)
+                self.countdown_played[countdown_value - 1] = True
 
         if countdown_value > 0:
             arcade.draw_text(str(countdown_value),
@@ -229,14 +251,6 @@ class TimerGame(arcade.View):
                          anchor_x="center")
 
     def draw_results(self):
-        self.cursor.execute("SELECT name FROM data_player1 WHERE id = 0", )
-        result = self.cursor.fetchone()
-        self.name_1 = result[0]
-
-        self.cursor.execute("SELECT name FROM data_player2 WHERE id = 0", )
-        result = self.cursor.fetchone()
-        self.name_2 = result[0]
-
         # Заголовок
         arcade.draw_text("РЕЗУЛЬТАТЫ",
                          SCREEN_WIDTH // 2,
@@ -256,7 +270,7 @@ class TimerGame(arcade.View):
 
         # Результат игрока 1
         diff1 = abs(self.target_time - self.player1_time)
-        arcade.draw_text(f"{self.name_1}: {self.player1_time:.2f} сек. (отклонение: {diff1:.2f})",
+        arcade.draw_text(f"{self.player1_name}: {self.player1_time:.2f} сек. (отклонение: {diff1:.2f})",
                          SCREEN_WIDTH // 2,
                          SCREEN_HEIGHT // 2 + 50,
                          self.player1_color,
@@ -265,7 +279,7 @@ class TimerGame(arcade.View):
 
         # Результат игрока 2
         diff2 = abs(self.target_time - self.player2_time)
-        arcade.draw_text(f"{self.name_2}: {self.player2_time:.2f} сек. (отклонение: {diff2:.2f})",
+        arcade.draw_text(f"{self.player2_name}: {self.player2_time:.2f} сек. (отклонение: {diff2:.2f})",
                          SCREEN_WIDTH // 2,
                          SCREEN_HEIGHT // 2,
                          self.player2_color,
@@ -275,13 +289,11 @@ class TimerGame(arcade.View):
         # Определение победителя
         if diff1 < diff2:
             self.winner_id = 1
-            self.winner = self.name_1
-            winner_text = f"ПОБЕДИТЕЛЬ: {self.winner}!"
+            winner_text = f"ПОБЕДИТЕЛЬ: {self.player1_name}!"
             winner_color = self.player1_color
         elif diff2 < diff1:
             self.winner_id = 2
-            self.winner = self.name_2
-            winner_text = f"ПОБЕДИТЕЛЬ: {self.winner}!"
+            winner_text = f"ПОБЕДИТЕЛЬ: {self.player2_name}!"
             winner_color = self.player2_color
         else:
             winner_text = "НИЧЬЯ!"
@@ -310,9 +322,7 @@ class TimerGame(arcade.View):
                 self.cursor.execute(f"""UPDATE data_player{self.winner_id} 
                     SET value = value + 10 WHERE id = 0""")
                 self.conn.commit()
-                self.start_game()
             self.window.show_view(ChooseGame())
-
 
         elif self.game_state == "INSTRUCTION":
             if key == arcade.key.SPACE:
@@ -322,13 +332,16 @@ class TimerGame(arcade.View):
             if key == arcade.key.W and not self.player1_stopped:
                 self.player1_time = self.current_time
                 self.player1_stopped = True
+                arcade.play_sound(self.button_sound)  # Звук нажатия кнопки
 
             elif key == arcade.key.UP and not self.player2_stopped:
                 self.player2_time = self.current_time
                 self.player2_stopped = True
+                arcade.play_sound(self.button_sound)  # Звук нажатия кнопки
 
             if self.player1_stopped and self.player2_stopped:
                 self.game_state = "RESULTS"
+                arcade.play_sound(self.end_game_sound)  # Звук окончания игры
 
         elif self.game_state == "RESULTS":
             if key == arcade.key.SPACE:

@@ -22,6 +22,9 @@ class ParkourGame(arcade.View):
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
 
+        self.player1_name = self.load_player_name(1)
+        self.player2_name = self.load_player_name(2)
+
         self.world_camera = arcade.camera.Camera2D()
         self.ui_camera = arcade.camera.Camera2D()
         self.world_width = SCREEN_WIDTH
@@ -91,6 +94,11 @@ class ParkourGame(arcade.View):
 
         self.create_coins()
 
+    def load_player_name(self, player_id):
+        self.cursor.execute(f"SELECT name FROM data_player{player_id} WHERE id = 0")
+        result = self.cursor.fetchone()
+        return result[0] if result else f"Игрок {player_id}"
+
     def create_coins(self):
         # Границы карты
         min_x = 50
@@ -131,7 +139,7 @@ class ParkourGame(arcade.View):
         if not self.game_started and not self.game_over:
             arcade.draw_text("Собирайте монеты, оставайтесь в живых!", SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 140,
                              arcade.color.BLACK, 32, bold=True, anchor_x="center")
-            arcade.draw_text("игрок 1 - влево(A)-вправо(D), игрок 2 - вверх(↑)-вниз(↓)", SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 70,
+            arcade.draw_text(f"{self.player1_name} - влево(A)-вправо(D), {self.player2_name} - вверх(↑)-вниз(↓)", SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 70,
                              arcade.color.BLACK, 24, bold=True, anchor_x="center")
             arcade.draw_text("Нажмите: Space - чтобы начать, Esc - чтобы выйти", SCREEN_WIDTH // 2,
                              SCREEN_HEIGHT // 2, arcade.color.BLACK, 24, anchor_x="center")
@@ -181,6 +189,13 @@ class ParkourGame(arcade.View):
 
     def check_collisions(self):
         if self.game_over:
+            return
+
+        if (self.player_sprite.center_x < 0 or
+                self.player_sprite.center_x > self.world_width or
+                self.player_sprite.center_y < 0 or
+                self.player_sprite.center_y > self.world_height):
+            self.game_over = True
             return
 
         self.player_sprite.center_y -= 2

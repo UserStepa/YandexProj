@@ -151,6 +151,21 @@ class ShootingGame(arcade.View):
         return texture
 
     def setup(self):
+        self.cursor.execute("SELECT value FROM data_players WHERE id = 7")
+        result = self.cursor.fetchone()
+        if result[0] == 1:
+            self.texture_pests = [
+                arcade.load_texture("images/shooting/rat_des.png"),
+                arcade.load_texture("images/shooting/cockroach_des.png"),
+                arcade.load_texture("images/shooting/fly_des.png")
+            ]
+        else:
+            self.texture_pests = [
+                arcade.load_texture("images/shooting/rat.png"),
+                arcade.load_texture("images/shooting/cockroach.png"),
+                arcade.load_texture("images/shooting/fly.png")
+            ]
+
         self.score_left = 0
         self.score_right = 0
         self.game_over = False
@@ -161,12 +176,6 @@ class ShootingGame(arcade.View):
         self.pests_left.clear()
         self.pest_batch.clear()
         self.all_sprites_batch.clear()
-
-        self.texture_pests = [
-            arcade.load_texture("images/shooting/rat.png"),
-            arcade.load_texture("images/shooting/cockroach.png"),
-            arcade.load_texture("images/shooting/fly.png")
-        ]
 
         # Крысы (нижняя часть экрана)
         for _ in range(2):

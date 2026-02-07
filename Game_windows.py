@@ -6,6 +6,7 @@ import sqlite3
 SCREEN_WIDTH = 900
 SCREEN_HEIGHT = 650
 
+
 class StartView(arcade.View):
     def __init__(self):
         super().__init__()
@@ -13,6 +14,13 @@ class StartView(arcade.View):
         from arcade.gui import UIManager
         self.manager = UIManager(self.window)
         self.manager.enable()
+
+        # Звуковые эффекты
+        self.button_click_sound = arcade.Sound(":resources:sounds/hit1.wav")
+        self.button_hover_sound = arcade.Sound(":resources:sounds/upgrade2.wav")
+        self.start_game_sound = arcade.Sound(":resources:sounds/coin1.wav")
+        self.back_sound = arcade.Sound(":resources:sounds/rockHit2.wav")
+        self.shop_sound = arcade.Sound(":resources:sounds/coin2.wav")
 
         # Подключение к БД
         self.conn = sqlite3.connect("2players_db.sqlite")
@@ -45,6 +53,7 @@ class StartView(arcade.View):
 
     def on_show_view(self):
         self.setup_ui()
+        arcade.set_background_color(arcade.color.DIM_GRAY)
         self.manager.enable()
 
     def setup_ui(self):
@@ -68,7 +77,7 @@ class StartView(arcade.View):
         # Магазин
         shop_button = UIFlatButton(text="🛒 МАГАЗИН", width=150,
                                    height=40, font_size=16, font_name="Arial")
-        shop_button.on_click = lambda event: self.on_shop_click(event,name='data_players')
+        shop_button.on_click = self.on_shop_click_with_sound
         bank_shop_container.add(shop_button)
         v_box.add(bank_shop_container)
 
@@ -100,7 +109,7 @@ class StartView(arcade.View):
         # Кнопка "Магазин" для игрока 1
         shop_btn_1 = UIFlatButton(text="🛒 ЛИЧНЫЙ МАГАЗИН", width=180,
                                   height=45, font_size=14, font_name="Arial")
-        shop_btn_1.on_click =  lambda event: self.on_shop_click(event,name='data_player1')
+        shop_btn_1.on_click = lambda event: self.on_player_shop_click(event, 'data_player1')
         player1_vbox.add(shop_btn_1)
 
         player1_container.add(player1_anchor)
@@ -132,7 +141,7 @@ class StartView(arcade.View):
         # Кнопка "Магазин" для игрока 2
         shop_btn_2 = UIFlatButton(text="🛒 ЛИЧНЫЙ МАГАЗИН", width=180,
                                   height=45, font_size=14, font_name="Arial")
-        shop_btn_2.on_click =  lambda event: self.on_shop_click(event, name='data_player2')
+        shop_btn_2.on_click = lambda event: self.on_player_shop_click(event, 'data_player2')
         player2_vbox.add(shop_btn_2)
 
         player2_container.add(player2_anchor)
@@ -143,14 +152,26 @@ class StartView(arcade.View):
         play_button_container = UIAnchorLayout()
         play_button = UIFlatButton(text="▶️ ИГРАТЬ", width=250,
                                    height=70, font_size=22, font_name="Arial", bold=True)
-        play_button.on_click = self.on_play_click
+        play_button.on_click = self.on_play_click_with_sound
         play_button_container.add(child=play_button, anchor_x="right", anchor_y="bottom")
         v_box.add(play_button_container)
 
         root.add(child=v_box, anchor_x="center", anchor_y="center")
         self.manager.add(root)
 
-    # Обработчики событий
+    # Обработчики событий с звуками
+    def on_shop_click_with_sound(self, event):
+        self.button_click_sound.play(volume=0.3)
+        self.on_shop_click(event, name='data_players')
+
+    def on_player_shop_click(self, event, name):
+        self.button_click_sound.play(volume=0.3)
+        self.on_shop_click(event, name=name)
+
+    def on_play_click_with_sound(self, event):
+        self.start_game_sound.play(volume=0.5)
+        self.on_play_click(event)
+
     def load_player_bank(self, name):
         table_name = name
         self.cursor.execute(f"SELECT value FROM {table_name} WHERE id = 0")
@@ -170,6 +191,7 @@ class StartView(arcade.View):
         self.conn.commit()
 
     def on_shop_click(self, event, name):
+        self.shop_sound.play(volume=0.3)
         self.window.show_view(Shop(name))
 
     def on_play_click(self, event):
@@ -186,16 +208,14 @@ class StartView(arcade.View):
             arcade.draw_texture_rect(self.texture_png, arcade.rect.XYWH(
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
                 SCREEN_WIDTH, SCREEN_HEIGHT))
-        else:
-            self.background_color = arcade.color.DIM_GRAY
 
         self.manager.draw()
 
         arcade.draw_texture_rect(self.player1_texture, arcade.rect.XYWH(
-            215,260, 120, 120))
+            215, 260, 120, 120))
 
         arcade.draw_texture_rect(self.player2_texture, arcade.rect.XYWH(
-                685,260,120,120))
+            685, 260, 120, 120))
 
     def on_close(self):
         if self.conn:
@@ -208,6 +228,11 @@ class ChooseGame(arcade.View):
 
         from arcade.gui import UIManager
         self.manager = UIManager(self.window)
+
+        # Звуковые эффекты
+        self.button_click_sound = arcade.Sound(":resources:sounds/hit1.wav")
+        self.select_game_sound = arcade.Sound(":resources:sounds/coin4.wav")
+        self.back_sound = arcade.Sound(":resources:sounds/rockHit2.wav")
 
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
@@ -223,7 +248,7 @@ class ChooseGame(arcade.View):
 
     def on_show_view(self):
         self.manager.enable()
-        arcade.set_background_color(arcade.color.DARK_GREEN)
+        arcade.set_background_color(arcade.color.DIM_GRAY)
         self.setup_ui()
 
     def setup_ui(self):
@@ -242,41 +267,41 @@ class ChooseGame(arcade.View):
 
         # Заголовок выбора игры
         title_label = UILabel(text="🎯 ВЫБЕРИТЕ РЕЖИМ ИГРЫ", font_size=32,
-        font_name="Arial", text_color=arcade.color.GOLD, bold=True, align="center")
+                              font_name="Arial", text_color=arcade.color.GOLD, bold=True, align="center")
         main_container.add(title_label)
         modes_container = UIBoxLayout(vertical=False, space_between=40, size_hint=(1.0, 0.7))
         left_container = UIBoxLayout(space_between=15, size_hint=(0.45, 1.0))
 
         # Заголовок командного режима
         team_title = UILabel(text="КОМАНДНЫЙ РЕЖИМ", font_size=26,
-        font_name="Arial", text_color=arcade.color.SKY_BLUE, bold=True, align="center")
+                             font_name="Arial", text_color=arcade.color.SKY_BLUE, bold=True, align="center")
         left_container.add(team_title)
         team_description_lines = ["🎮 Играйте вместе с другом",
-            "💸 Деньги идут в общий банк", "🏆 Общие достижения"]
+                                  "💸 Деньги идут в общий банк", "🏆 Общие достижения"]
         for line in team_description_lines:
             line_label = UILabel(text=line, font_size=14, font_name="Arial",
-            text_color=arcade.color.BLACK, align="center")
+                                 text_color=arcade.color.BLACK, align="center")
             left_container.add(line_label)
         left_container.add(UISpace(height=10))
 
         # Кнопки игр для командного режима
-        games_team = ["⛳ Гольф", "🤖 Арканоид", "🏃 Паркур", "🎳 ИГРА 4"]
+        games_team = ["⛳ Гольф", "🤖 Арканоид", "🏃 Паркур", "🔵 Pac-Man"]
         for i, game_text in enumerate(games_team, 1):
             game_btn = UIFlatButton(text=game_text, width=220,
-            height=55, font_size=16, font_name="Arial")
-            game_btn.on_click = getattr(self, f"on_team_game{i}_click")
+                                    height=55, font_size=16, font_name="Arial")
+            game_btn.on_click = self.create_game_click_handler(f"on_team_game{i}_click")
             left_container.add(game_btn)
         modes_container.add(left_container)
         right_container = UIBoxLayout(space_between=15, size_hint=(0.45, 1.0))
         vs_title = UILabel(text="РЕЖИМ ПРОТИВНИКА",
-        font_size=26, font_name="Arial", text_color=arcade.color.ORANGE_RED,
-        bold=True, align="center")
+                           font_size=26, font_name="Arial", text_color=arcade.color.ORANGE_RED,
+                           bold=True, align="center")
         right_container.add(vs_title)
         vs_description_lines = ["🎮 Соревнуйтесь друг с другом",
-            "💸 Деньги идут в личный банк", "🏆 Побеждает сильнейший"]
+                                "💸 Деньги идут в личный банк", "🏆 Побеждает сильнейший"]
         for line in vs_description_lines:
             line_label = UILabel(text=line, font_size=14, font_name="Arial",
-            text_color=arcade.color.BLACK, align="center")
+                                 text_color=arcade.color.BLACK, align="center")
             right_container.add(line_label)
         right_container.add(UISpace(height=10))
 
@@ -284,8 +309,8 @@ class ChooseGame(arcade.View):
         games_vs = ["🎾 Теннис", "🪳 Набег вредителей", "🕰️ Точный таймер", "🐍 Змейка PvP"]
         for i, game_text in enumerate(games_vs, 1):
             game_btn = UIFlatButton(text=game_text, width=220, height=55,
-            font_size=16, font_name="Arial")
-            game_btn.on_click = getattr(self, f"on_vs_game{i}_click")
+                                    font_size=16, font_name="Arial")
+            game_btn.on_click = self.create_game_click_handler(f"on_vs_game{i}_click")
             right_container.add(game_btn)
         modes_container.add(right_container)
         main_container.add(modes_container)
@@ -293,13 +318,22 @@ class ChooseGame(arcade.View):
 
         # Кнопка "Назад"
         back_button = UIFlatButton(text="🔙 НАЗАД", width=200,
-        height=50, font_size=18, font_name="Arial", bold=True)
-        back_button.on_click = self.on_back_click
+                                   height=50, font_size=18, font_name="Arial", bold=True)
+        back_button.on_click = self.on_back_click_with_sound
         back_button_container.add(child=back_button, anchor_x="center", anchor_y="center")
         main_container.add(back_button_container)
 
         root.add(child=main_container, anchor_x="center", anchor_y="center")
         self.manager.add(root)
+
+    def create_game_click_handler(self, method_name):
+        """Создает обработчик клика с воспроизведением звука"""
+
+        def handler(event):
+            self.select_game_sound.play(volume=0.4)
+            getattr(self, method_name)(event)
+
+        return handler
 
     # Обработчики для командного режима
     def on_team_game1_click(self, event):
@@ -315,8 +349,8 @@ class ChooseGame(arcade.View):
         self.window.show_view(ParkourGame())
 
     def on_team_game4_click(self, event):
-        print("Выбрана командная игра 4")
-        # Здесь будет переход к выбранной игре
+        from PacMan import PacManGame
+        self.window.show_view(PacManGame())
 
     # Обработчики для режима друг против друга
     def on_vs_game1_click(self, event):
@@ -335,6 +369,10 @@ class ChooseGame(arcade.View):
         from Snake import SnakeGame
         self.window.show_view(SnakeGame())
 
+    def on_back_click_with_sound(self, event):
+        self.back_sound.play(volume=0.3)
+        self.on_back_click(event)
+
     def on_back_click(self, event):
         start_view = StartView()
         self.window.show_view(start_view)
@@ -349,8 +387,6 @@ class ChooseGame(arcade.View):
             arcade.draw_texture_rect(self.texture_png, arcade.rect.XYWH(
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
                 SCREEN_WIDTH, SCREEN_HEIGHT))
-        else:
-            self.background_color = arcade.color.DIM_GRAY
 
         self.manager.draw()
 
@@ -358,6 +394,13 @@ class ChooseGame(arcade.View):
 class Shop(arcade.View):
     def __init__(self, player):
         super().__init__()
+
+        # Звуковые эффекты
+        self.button_click_sound = arcade.Sound(":resources:sounds/hit1.wav")
+        self.buy_sound = arcade.Sound(":resources:sounds/coin5.wav")
+        self.select_sound = arcade.Sound(":resources:sounds/upgrade1.wav")
+        self.error_sound = arcade.Sound(":resources:sounds/error2.wav")
+        self.back_sound = arcade.Sound(":resources:sounds/rockHit2.wav")
 
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
@@ -435,7 +478,7 @@ class Shop(arcade.View):
                 y=pos.y - pos.height / 2 - 40
             )
             button.index = i
-            button.on_click = self.on_buy_button_click
+            button.on_click = self.on_buy_button_click_with_sound
             self.ui_manager.add(button)
             self.buy_buttons_top.append(button)
             self.buttons.append(button)
@@ -450,13 +493,12 @@ class Shop(arcade.View):
                 y=pos.y - pos.height / 2 - 40
             )
             button.index = i + 4
-            button.on_click = self.on_buy_button_click
+            button.on_click = self.on_buy_button_click_with_sound
             self.ui_manager.add(button)
             self.buy_buttons_bottom.append(button)
             self.buttons.append(button)
 
         for i in range(8):
-
             if values[i][0] == 1 and self.player == 'data_players':
                 self.buttons[i].text = "Используется"
             elif values[i][0] == -1 and self.player == 'data_players':
@@ -466,7 +508,6 @@ class Shop(arcade.View):
             elif values[i][0] == -1:
                 self.buttons[i].text = "Выбрать"
 
-
         back_button = gui.UIFlatButton(
             text="Назад",
             width=100,
@@ -474,7 +515,7 @@ class Shop(arcade.View):
             x=400,
             y=80
         )
-        back_button.on_click = self.on_back_button_click
+        back_button.on_click = self.on_back_button_click_with_sound
         self.ui_manager.add(back_button)
 
         self.cursor.execute(f"SELECT value FROM {self.player} WHERE id = 0")
@@ -488,8 +529,6 @@ class Shop(arcade.View):
             arcade.draw_texture_rect(self.texture_png, arcade.rect.XYWH(
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
                 SCREEN_WIDTH, SCREEN_HEIGHT))
-        else:
-            self.background_color = arcade.color.DIM_GRAY
 
         arcade.draw_text(
             self.text,
@@ -530,19 +569,28 @@ class Shop(arcade.View):
         self.ui_manager.draw()
 
     def on_show_view(self):
+        arcade.set_background_color(arcade.color.DIM_GRAY)
         self.ui_manager.enable()
 
     def on_hide_view(self):
         self.ui_manager.disable()
 
+    def on_back_button_click_with_sound(self, event):
+        self.back_sound.play(volume=0.3)
+        self.on_back_button_click(event)
+
     def on_back_button_click(self, event):
         self.window.show_view(StartView())
+
+    def on_buy_button_click_with_sound(self, event):
+        self.button_click_sound.play(volume=0.3)
+        self.on_buy_button_click(event)
 
     def on_buy_button_click(self, event):
         avatar_index = event.source.index
 
         if not self.avatars_purchased[avatar_index]:
-            if avatar_index >= 1 and avatar_index <= 3:
+            if avatar_index >= 0 and avatar_index <= 3:
                 money = 100
             else:
                 money = 200
@@ -554,7 +602,11 @@ class Shop(arcade.View):
                 self.conn.commit()
                 self.avatars_purchased[avatar_index] = True
                 event.source.text = "Выбрать"
+                self.buy_sound.play(volume=0.4)  # Звук покупки
+            else:
+                self.error_sound.play(volume=0.3)  # Звук ошибки (недостаточно денег)
         else:
+            self.select_sound.play(volume=0.3)  # Звук выбора
             self.select_avatar(avatar_index)
 
     def select_avatar(self, avatar_index):
@@ -585,8 +637,22 @@ class Shop(arcade.View):
 
 def main():
     window = arcade.Window(900, 650, "Игра: Стартовое окно", resizable=False)
+
+    # Фоновый звук при запуске
+    startup_sound = arcade.Sound(":resources:sounds/upgrade3.wav")
+    startup_sound.play(volume=0.2)
+
     start_view = StartView()
     window.show_view(start_view)
+
+    # Обработчик закрытия окна
+    def on_close():
+        close_sound = arcade.Sound(":resources:sounds/gameover3.wav")
+        close_sound.play(volume=0.3)
+        arcade.close_window()
+
+    window.on_close = on_close
+
     arcade.run()
 
 

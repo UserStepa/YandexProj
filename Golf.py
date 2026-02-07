@@ -151,7 +151,6 @@ class GolfGame(arcade.View):
             distance = 80
             angle_rad = math.radians(self.aim_angle)
 
-            # Изменено: обращаемся напрямую к center_x и center_y мяча
             end_x = self.ball.center_x + math.cos(angle_rad) * distance
             end_y = self.ball.center_y + math.sin(angle_rad) * distance
 
@@ -234,10 +233,13 @@ class GolfGame(arcade.View):
         self.time_left -= delta_time
         if self.time_left <= 0:
             self.game_state = "GAME_OVER"
+            arcade.play_sound(arcade.load_sound(":resources:sounds/gameover3.wav"), volume=0.6)
             return
 
         if self.ball:
             if not self.ball.in_pocket:
+                # Проверка столкновения со стеной
+                current_velocity = math.sqrt(self.ball.velocity_x ** 2 + self.ball.velocity_y ** 2)
                 self.ball.update()
 
             if not self.ball.in_pocket and self.pocket:
@@ -249,6 +251,9 @@ class GolfGame(arcade.View):
                 if distance < 30:
                     self.ball.in_pocket = True
                     self.score += 10
+
+                    # Воспроизведение звука попадания в лузку
+                    arcade.play_sound(arcade.load_sound(":resources:sounds/coin3.wav"), volume=0.7)
 
                     self.create_random_positions()
 
@@ -275,6 +280,8 @@ class GolfGame(arcade.View):
             if self.power >= 100:
                 self.power_direction = -1
                 self.power = 100
+                # Воспроизведение звука при достижении максимума силы
+                arcade.play_sound(arcade.load_sound(":resources:sounds/jump3.wav"), volume=0.4)
             elif self.power <= 0:
                 self.power_direction = 1
                 self.power = 0
@@ -287,6 +294,8 @@ class GolfGame(arcade.View):
             self.player_turn = 2 if self.player_turn == 1 else 1
             self.aim_angle = 0
             self.power = 0
+            # Воспроизведение звука смены игрока
+            arcade.play_sound(arcade.load_sound(":resources:sounds/switch2.wav"), volume=0.3)
             return
 
         if self.game_state == "AIMING":
@@ -313,6 +322,8 @@ class GolfGame(arcade.View):
         if key == arcade.key.SPACE:
             if not self.game_started:
                 self.game_started = True
+                # Воспроизведение звука начала игры
+                arcade.play_sound(arcade.load_sound(":resources:sounds/upgrade4.wav"), volume=0.4)
 
         if key == arcade.key.ESCAPE:
             from Game_windows import ChooseGame

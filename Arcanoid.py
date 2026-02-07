@@ -84,6 +84,9 @@ class ArkanoidGame(arcade.View):
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
 
+        self.player1_name = self.load_player_name(1)
+        self.player2_name = self.load_player_name(2)
+
         self.score = 0
         self.time_left = GAME_TIME
         self.game_started = False
@@ -144,6 +147,11 @@ class ArkanoidGame(arcade.View):
                 self.bricks.append(brick)
                 self.all_sprites.append(brick)
 
+    def load_player_name(self, player_id):
+        self.cursor.execute(f"SELECT name FROM data_player{player_id} WHERE id = 0")
+        result = self.cursor.fetchone()
+        return result[0] if result else f"Игрок {player_id}"
+
     def on_draw(self):
         self.clear()
 
@@ -151,7 +159,7 @@ class ArkanoidGame(arcade.View):
         if not self.game_started and not self.game_over:
             arcade.draw_text("Выбивайте кирпичи и удерживайте шар!", SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100,
                              arcade.color.WHITE, 24, anchor_x="center")
-            arcade.draw_text("Управление: A - влево, ⟶ - вправо",
+            arcade.draw_text(f"Управление: {self.player1_name} - влево(A), {self.player2_name} - вправо(⟶)",
                              SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50,
                              arcade.color.WHITE, 20, anchor_x="center")
             arcade.draw_text("Нажмите SPACE чтобы начать, ESC чтобы выйти",

@@ -70,6 +70,15 @@ class TennisGame(arcade.View):
         self.conn = sqlite3.connect("2players_db.sqlite")
         self.cursor = self.conn.cursor()
 
+        self.player1_name = self.load_player_name(1)
+        self.player2_name = self.load_player_name(2)
+
+        # Звуки отскока мяча
+        self.paddle_hit_sound = arcade.load_sound(":resources:sounds/hit5.wav")
+        self.wall_hit_sound = arcade.load_sound(":resources:sounds/hit4.wav")
+        self.score_sound = arcade.load_sound(":resources:sounds/upgrade4.wav")
+        self.start_sound = arcade.load_sound(":resources:sounds/coin2.wav")
+
         # Купленный дизайн
         self.cursor.execute("SELECT value FROM data_players WHERE id = 1")
         result = self.cursor.fetchone()
@@ -95,6 +104,11 @@ class TennisGame(arcade.View):
         self.winner_id = 0
 
         self.setup()
+
+    def load_player_name(self, player_id):
+        self.cursor.execute(f"SELECT name FROM data_player{player_id} WHERE id = 0")
+        result = self.cursor.fetchone()
+        return result[0] if result else f"Игрок {player_id}"
 
     def load_texture(self, name, id):
         self.cursor.execute(
@@ -127,8 +141,10 @@ class TennisGame(arcade.View):
 
         if not self.game_started and not self.game_over:
             arcade.draw_text("Забейте 5 раз сопернику!",
-            SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 100, arcade.color.BLACK, 20, anchor_x="center")
+            SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 150, arcade.color.BLACK, 20, anchor_x="center")
             arcade.draw_text("Нажмите: Space - чтобы начать, Esc - чтобы выйти",
+            SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 100, arcade.color.BLACK, 20, anchor_x="center")
+            arcade.draw_text(f"Управление: {self.player1_name} - WS, {self.player2_name} - ↑↓",
             SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50, arcade.color.BLACK, 20, anchor_x="center")
 
         if self.game_over:
@@ -144,41 +160,48 @@ class TennisGame(arcade.View):
         self.sprite_list.update(delta_time)
         self.ball.update(delta_time)
 
+        # Проверка столкновения с верхней/нижней стенкой
+        if self.ball.top >= SCREEN_HEIGHT or self.ball.bottom <= 0:
+            arcade.play_sound(self.wall_hit_sound, volume=0.3)
+
+        # Проверка столкновения с левой ракеткой
         if arcade.check_for_collision(self.ball, self.left_paddle):
-            self.ball.change_x *= -1
+            arcade.play_sound(self.paddle_hit_sound, volume=0.5)
+            self.ball.change_x = abs(self.ball.change_x)
             self.ball.left = self.left_paddle.right
 
+        # Проверка столкновения с правой ракеткой
         if arcade.check_for_collision(self.ball, self.right_paddle):
-            self.ball.change_x *= -1
+            arcade.play_sound(self.paddle_hit_sound, volume=0.5)
+            self.ball.change_x = -abs(self.ball.change_x)
             self.ball.right = self.right_paddle.left
 
+        # Проверка гола
         if self.ball.left <= 0:
             self.right_score += 1
+            arcade.play_sound(self.score_sound, volume=0.5)
             self.ball.reset()
             self.game_started = False
         elif self.ball.right >= SCREEN_WIDTH:
             self.left_score += 1
+            arcade.play_sound(self.score_sound, volume=0.5)
             self.ball.reset()
             self.game_started = False
 
         if self.left_score == 5:
             self.game_over = True
-            self.cursor.execute("SELECT name FROM data_player1 WHERE id = 0",)
-            result = self.cursor.fetchone()
-            self.winner = result[0]
+            self.winner = self.player1_name
             self.winner_id = 1
         elif self.right_score == 5:
             self.game_over = True
-            self.cursor.execute("SELECT name FROM data_player2 WHERE id = 0")
-            result = self.cursor.fetchone()
-            self.winner = result[0]
+            self.winner = self.player2_name
             self.winner_id = 2
-
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.SPACE:
-            if not self.game_started:
+            if not self.game_started and not self.game_over:
                 self.game_started = True
+                arcade.play_sound(self.start_sound, volume=0.5)
                 self.ball.reset()
 
         if key == arcade.key.ESCAPE:
