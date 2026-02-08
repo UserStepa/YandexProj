@@ -245,10 +245,10 @@ class SnakeGame(arcade.View):
             y=GRID_HEIGHT // 2,
             color=PLAYER1_COLOR,
             controls={
-                arcade.key.UP: (0, 1),
-                arcade.key.DOWN: (0, -1),
-                arcade.key.LEFT: (-1, 0),
-                arcade.key.RIGHT: (1, 0)
+                arcade.key.W: (0, 1),
+                arcade.key.S: (0, -1),
+                arcade.key.A: (-1, 0),
+                arcade.key.D: (1, 0)
             },
             player_num=1,
             name=self.player1_name
@@ -258,10 +258,10 @@ class SnakeGame(arcade.View):
             y=GRID_HEIGHT // 2,
             color=PLAYER2_COLOR,
             controls={
-                arcade.key.W: (0, 1),
-                arcade.key.S: (0, -1),
-                arcade.key.A: (-1, 0),
-                arcade.key.D: (1, 0)
+                arcade.key.UP: (0, 1),
+                arcade.key.DOWN: (0, -1),
+                arcade.key.LEFT: (-1, 0),
+                arcade.key.RIGHT: (1, 0)
             },
             player_num=2,
             name=self.player2_name
@@ -343,7 +343,7 @@ class SnakeGame(arcade.View):
 
         if self.player2_texture:
             arcade.draw_texture_rect(self.player2_texture, arcade.rect.XYWH(
-                SCREEN_WIDTH - 50, SCREEN_HEIGHT - 25, 50, 50))
+                SCREEN_WIDTH - 30, SCREEN_HEIGHT - 25, 50, 50))
 
         arcade.draw_text(
             f"Яблок на поле: {FOOD_COUNT}",
